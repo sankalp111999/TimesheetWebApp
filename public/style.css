@@ -1,0 +1,153 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+}
+
+
+#header {
+    padding: 80px;
+    text-align: center;
+    background: radial-gradient(circle, #000000, #72fff3);
+    background-color: teal;
+    font-weight: bolder;
+    color: #fff;
+}
+
+
+#header h1 {
+    font-size: 100px;
+    
+		 font-family: cursive;
+		 color: white;		
+}
+
+
+
+.button-group {
+    display: flex;
+    align-items: center; /* Vertical alignment */
+}
+
+.button-group button {
+     /* Adjust as needed */
+}
+
+
+
+.button-group {
+    display: grid;
+    grid-template-columns: auto auto; /* Two columns */
+    /* Adjust as needed */
+}
+
+
+
+/* Custom styling for the file input */
+.custom-file-input {
+    border: 1px solid #ced4da; /* Matches Bootstrap's default border color */
+    border-radius: .25rem; /* Bootstrap's default border-radius */
+    padding: .375rem .75rem; /* Adjust padding as needed */
+    font-size: 1rem; /* Matches Bootstrap's default font-size */
+    line-height: 1.5; /* Matches Bootstrap's default line-height */
+    color: #495057; /* Matches Bootstrap's default text color */
+    background-color: #fff; /* Matches Bootstrap's default background color */
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; /* Bootstrap's default transition */
+}
+
+/* Custom styling for the upload button */
+.custom-upload-button {
+    margin-top: 10px; /* Adds some space above the button */
+    padding: .5rem 1rem; /* Adjusts the button's padding */
+    font-size: 1rem; /* Matches Bootstrap's default font-size */
+    line-height: 1.5; /* Matches Bootstrap's default line-height */
+    border-radius: .25rem; /* Bootstrap's default border-radius */
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out; /* Bootstrap's default transition */
+}
+
+
+
+
+
+
+
+
+/*File upload*/
+.upload {
+    margin-bottom: 20px;
+}
+
+.upload input[type="file"] {
+    width: 200px;
+}
+
+.upload button {
+    margin-left: 500px;
+}
+
+
+
+.footer {
+    position: fixed;
+    width: 100%;
+    text-align: center;
+    padding: 10px; 
+    background: radial-gradient(circle, #000000, #72fff3);
+    
+    font-weight: bold;
+    bottom: 0px;
+    text-shadow: 50px;
+}
+.footer h5{
+    text-align: center;
+    margin-top: 10px;
+    color: rgb(211, 255, 244); 
+}
+
+#centeredCard {
+    padding: 40px;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0 auto;
+    margin-top: 50px;
+}
+
+.btn {
+    display: block;
+    margin: auto;
+    margin-right: 60%;
+}
+
+.btn1 {
+    height: auto;
+    margin: auto;
+    display: block;
+
+}
+
+.UserTable table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+
+}
+
+.UserTable table thead th {
+
+    color: #fff;
+    border-radius: 1px;
+    padding: 10px 25px;
+    font-family: 'Anta', sans-serif;
+    font-weight: 500;
+    background: transparent;
+    box-shadow: inset 2px 2px 2px 0px rgba(255, 255, 255, .5),
+        7px 7px 20px 0px rgba(0, 0, 0, .1),
+        4px 4px 5px 0px rgba(0, 0, 0, .1);
+
+    background: rgb(51, 61, 206);
+    background: linear-gradient(0deg, rgb(32, 42, 189) 0%, rgb(0, 12, 143) 100%);
+}

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Sheet App</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sammy/0.7.6/sammy.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+
+
+
+</head>
+
+<body>
+
+    <script>
+        
+
+
+
+
+
+        // Check if there's a query parameter indicating a successful upload
+        //if (window.location.search.includes('uploadSuccess')) {
+        // Refresh the page
+        //window.location.reload();
+        //}
+
+
+
+
+
+        var check;
+        let myVariable = 'Hello, world!';
+
+        function editTimeSheet(id) {
+            check = id;
+            $("#subButton").addClass("updateBtn")
+            // Fetch time sheet details for editing
+            $.ajax({
+                type: 'GET',
+                url: `http://localhost:3000/api/get-timesheets/${id}`,
+                success: function (timesheet) {
+                    // Populate the form fields with the fetched time sheet details
+                    $('#fullName').val(timesheet.fullName);
+                    $('#workMode').val(timesheet.workMode);
+                    $('#officeLocation').val(timesheet.officeLocation);
+                    $('#hoursOfWork').val(timesheet.hoursOfWork);
+
+                    // Show the modal for editing
+                    $('#timeSheetModal').modal('show');
+
+                    // Update button click event handler to send a PUT request
+                    $('#subButton').off('click').on('click', function () {
+                        // Prepare data to send in the PUT request
+                        const updatedData = {
+                            fullName: $('#fullName').val(),
+                            workMode: $('#workMode').val(),
+                            officeLocation: $('#officeLocation').val(),
+                            hoursOfWork: $('#hoursOfWork').val()
+                        };
+                        // Send PUT request to update the timesheet entry
+                        $.ajax({
+                            type: 'PUT',
+                            url: `http://localhost:3000/api/update-timesheet/${id}`,
+                            contentType: 'application/json',
+                            data: JSON.stringify(updatedData),
+                            success: function (response) {
+                                console.log('Time sheet entry updated successfully:', response);
+                                // Optionally, reload the page or update the UI to reflect the changes
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Error updating time sheet entry:', error);
+                                // Optionally, display an error message or handle the error
+                            }
+                        });
+
+                        // Hide the modal after submitting the update
+                        $('#timeSheetModal').modal('hide');
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching time sheet details for editing:', error);
+                    // Optionally, handle the error here
+                }
+            });
+        }
+        // Function to handle delete time sheet action
+        function deleteTimeSheet(id) {
+            // Confirm deletion
+            if (confirm('Are you sure you want to delete this time sheet entry?')) {
+                // Perform AJAX request to delete the time sheet entry
+                $.ajax({
+                    type: 'DELETE',
+                    url: `http://localhost:3000/api/delete-timesheets/${id}`, // Endpoint to delete time sheet entry
+                    success: function (response) {
+                        console.log('Time sheet entry deleted successfully:', response);
+                        // Remove the table row corresponding to the deleted time sheet entry
+                        $(`#timeSheetRow_${id}`).remove();
+                        window.location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error deleting time sheet entry:', error);
+                        // Optionally, handle the error here
+                    }
+                });
+            }
+        }
+
+
+
+        $(document).ready(function () {
+            fetchTimeSheetData();
+
+
+
+            function fetchTimeSheetData() {
+                $.ajax({
+                    type: 'GET',
+                    url: 'http://localhost:3000/api/get-timesheets', // Endpoint to fetch time sheet data
+                    success: function (timesheets) {
+                        // Clear existing table body content
+                        $('#timeSheetBody').empty();
+
+
+                        timesheets.forEach(function (timesheet) {
+                            $('#timeSheetBody').append(`
+                                <tr>
+                                    <td>${timesheet.fullName}</td>
+                                    <td>Sa-54328</td>
+                                    <td>${timesheet.workMode}</td>
+                                    <td>${timesheet.officeLocation}</td>
+                                    <td>${timesheet.hoursOfWork}</td>
+                                    <td class="button-group">
+                                        <button id="edit" class="btn btn-primary" onclick="editTimeSheet(${timesheet.id})">Edit</button>
+                                        <button id="delete" class="btn btn-danger" onclick="deleteTimeSheet(${timesheet.id})">Delete</button>
+
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching time sheet data:', error);
+
+                    }
+                });
+            }
+
+
+            var app = Sammy('#content', function () {
+
+                this.get('#/', function () {
+                    this.partial('templates/home.template');
+                });
+            });
+
+
+            app.run('#/');
+        });
+
+
+
+        // Show the time sheet entry modal
+        function showTimeSheetModal() {
+            $('#timeSheetModal').modal('show');
+        }
+
+        // Handle time sheet form submission
+        function submitTimeSheetForm() {
+            var fullName = $('#fullName').val();
+            var workMode = $('#workMode').val();
+            var officeLocation = $('#officeLocation').val();
+            var hoursOfWork = $('#hoursOfWork').val();
+
+            // Regular expressions for validation
+            const namePattern = /^[a-zA-Z ]+$/; // Only letters and spaces, no integers or underscores
+            const locationPattern = /^[a-zA-Z ]+$/; // Only letters and spaces, no numbers
+            const hoursPattern = /^[0-8]$/; // Numbers from 0 to 8, ensuring it's a single digit
+
+            // Validate fullName
+            if (!fullName.match(namePattern)) {
+                alert('Full Name should contain only letters and spaces.');
+                return false;
+            }
+
+            // Validate officeLocation
+            if (!officeLocation.match(locationPattern)) {
+                alert('Office Location should contain only letters and spaces.');
+                return false;
+            }
+
+            // Validate hoursOfWork
+            if (!hoursOfWork.match(hoursPattern)) {
+                alert('Hours of Work should be a single digit number between 0 and 8.');
+                return false;
+            }
+
+            // If validation passes, proceed with the AJAX call to submit the data
+            $('#timeSheetModal').modal('hide');
+            console.log('Submitting data...');
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:3000/api/create-timesheets',
+                contentType: 'application/json',
+                data: JSON.stringify({ fullName: fullName, workMode: workMode, officeLocation: officeLocation, hoursOfWork: hoursOfWork }),
+                success: function (response) {
+                    console.log('Time sheet entry added successfully:', response);
+                    // Clear the form fields after successful submission
+                    $('#fullName').val('');
+                    $('#workMode').val('');
+                    $('#officeLocation').val('');
+                    $('#hoursOfWork').val('');
+                    // Optionally, refresh the page or update the UI to display the updated time sheet entries
+                    window.location.reload();
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error adding time sheet entry:', error);
+                    // Optionally, handle the error response here (e.g., display an error message)
+                }
+            });
+        }
+
+
+    </script>
+
+    <!-- Time Sheet Entry Modal -->
+    <div class="modal fade" id="timeSheetModal" tabindex="-1" role="dialog" aria-labelledby="timeSheetModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="timeSheetModalLabel">Time Sheet Entry</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Your time entry form goes here submitTimeSheetForm(); return false;-->
+                    <form id="timeSheetForm" onsubmit="submitTimeSheetForm(); return false;">
+                        <!-- Form fields go here -->
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" class="form-control" id="fullName" name="fullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="workMode">Work Mode</label>
+                            <select class="form-control" id="workMode" name="workMode" required>
+                                <option value="Work from Home">Work from Home</option>
+                                <option value="Work from Office">Work from Office</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="officeLocation">Office Location</label>
+                            <input type="text" class="form-control" id="officeLocation" name="officeLocation" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hoursOfWork">Hours of Work</label>
+                            <input type="number" class="form-control" id="hoursOfWork" name="hoursOfWork" required>
+                        </div>
+                        <button type="submit" id="subButton" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Home Page Content -->
+    <div id="content">
+
+        <!-- Header -->
+        <div id="header">
+            <h1>TimeSheet App</h1>
+        </div>
+
+
+
+        <!-- Centered Card -->
+        <div id="centeredCard" class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-primary" onclick="showTimeSheetModal()">Add Time</button>
+                    <form class="upload form-inline" action="/upload" method="POST" enctype="multipart/form-data">
+                        <div class="form-group mr-2">
+                            <input type="file" class="form-control-file custom-file-input" name="file" accept=".xlsx">
+                            
+                        </div>
+                        <button type="submit" class="btn btn-primary custom-upload-button">Upload</button>
+                        
+                    </form>
+
+                </div>
+
+                <div class="UserTable">
+                    <table border={1} cellPadding={10} cellSpacing={3}>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Employee ID</th>
+                                <th>Work Mode</th>
+                                <th>Base Location</th>
+                                <th>Hours Of Work</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timeSheetBody">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- Footer -->
+    <div class="footer">
+        <h5>Agami Technologies</h5>
+    </div>
+
+</body>
+
+</html>
