@@ -47,16 +47,7 @@ body {
 
 
 /* Custom styling for the file input */
-.custom-file-input {
-    border: 1px solid #ced4da; /* Matches Bootstrap's default border color */
-    border-radius: .25rem; /* Bootstrap's default border-radius */
-    padding: .375rem .75rem; /* Adjust padding as needed */
-    font-size: 1rem; /* Matches Bootstrap's default font-size */
-    line-height: 1.5; /* Matches Bootstrap's default line-height */
-    color: #495057; /* Matches Bootstrap's default text color */
-    background-color: #fff; /* Matches Bootstrap's default background color */
-    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; /* Bootstrap's default transition */
-}
+
 
 /* Custom styling for the upload button */
 .custom-upload-button {

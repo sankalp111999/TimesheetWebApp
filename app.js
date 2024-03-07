@@ -1,4 +1,4 @@
-
+const path = require('path');
 const cors = require('cors')
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -33,7 +33,25 @@ app.use(bodyParser.json());
 
 
 // Configure Multer for file upload
-const upload = multer({ dest: 'uploads/' });
+// Configure Multer to dynamically set the destination based on the file type
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // Check if the file is an image
+        if (file.mimetype.startsWith('image/')) {
+            // Set the destination to 'uploads/images'
+            cb(null, 'uploads/images/');
+        } else {
+            // For other file types, set the destination to 'uploads'
+            cb(null, 'uploads/');
+        }
+    },
+    filename: function (req, file, cb) {
+        // Use the original file name
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
 
 
 
@@ -46,8 +64,8 @@ const upload = multer({ dest: 'uploads/' });
 
 // Connect to the database
 const sequelize = new Sequelize('mytime', 'root', 'root', {
-  host: 'localhost',
-  dialect: 'mysql',
+    host: 'localhost',
+    dialect: 'mysql',
 });
 
 
@@ -61,7 +79,30 @@ Timesheet.sync();
 
 
 // Middleware to serve static files from 'public' directory
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
+
+
+// Set EJS as the view engine
+app.set('view engine', 'ejs');
+
+
+// Configure Multer for image uploads
+//const uploadImages = multer({ dest: 'uploads/images/' });
+
+// Serve uploaded images
+//app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
+
+/* Route to handle image uploads
+app.post('/upload-image', uploadImages.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No file uploaded');
+    }
+    // You can save the image path in the database here if needed
+    res.send('Image uploaded successfully');
+});
+
+*/
 
 
 
@@ -70,30 +111,45 @@ app.use(express.static('public'));
 // Route to handle file upload
 app.post('/upload', upload.single('file'), async (req, res) => {
     if (!req.file) {
-      return res.status(400).send('No file uploaded');
+        return res.status(400).send('No file uploaded');
     }
 
-    // Parse Excel file
-    const workbook = xlsx.readFile(req.file.path);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+    if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        // Handle .xlsx file
+        const workbook = xlsx.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
 
-    // Insert data into MySQL database using Sequelize
-    try {
-        for (const row of data.slice(1)) {
-            await Timesheet.create({
-                fullName: row[0],
-                workMode: row[1],
-                officeLocation: row[2],
-                hoursOfWork: row[3],
-            });
+        // Insert data into MySQL database using Sequelize
+        try {
+            for (const row of data.slice(1)) {
+                await Timesheet.create({
+                    fullName: row[0],
+                    workMode: row[1],
+                    officeLocation: row[2],
+                    hoursOfWork: row[3],
+                });
+            }
+            res.send('File uploaded and data inserted into database successfully');
+        } catch (err) {
+            console.error('Error inserting data into database:', err);
+            res.status(500).send('Error inserting data into database');
         }
-        res.send('File uploaded and data inserted into database successfully');
-    } catch (err) {
-        console.error('Error inserting data into database:', err);
-        res.status(500).send('Error inserting data into database');
+    } else if (req.file.mimetype.startsWith('image/')) {
+        // Handle image file
+        // For example, save the image path in the database
+        res.redirect(`/view-image?imagePath=/uploads/images/${req.file.filename}`);
+    } else {
+        return res.status(400).send('Invalid file type');
     }
+});
+
+
+
+app.get('/view-image', (req, res) => {
+    const imagePath = req.query.imagePath;
+    res.render('view-image', { imagePath });
 });
 
 
@@ -106,22 +162,26 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 // Create a new timesheet entry
 app.post('/api/create-timesheets', async (req, res) => {
     try {
-      const { fullName, workMode, officeLocation, hoursOfWork } = req.body;
-      const newTimesheetEntry = await Timesheet.create({
-        fullName,
-        workMode,
-        officeLocation,
-        hoursOfWork,
-      });
-  
-      res.json(newTimesheetEntry);
+        const { fullName, workMode, officeLocation, hoursOfWork } = req.body;
+        const newTimesheetEntry = await Timesheet.create({
+            fullName,
+            workMode,
+            officeLocation,
+            hoursOfWork,
+        });
+
+        res.json(newTimesheetEntry);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+        console.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-  });
-  
-  // Fetch all timesheet entries
+});
+
+
+
+
+
+// Fetch all timesheet entries
 app.get('/api/get-timesheets', async (req, res) => {
     try {
         const timesheets = await Timesheet.findAll();
@@ -183,7 +243,7 @@ app.delete('/api/delete-timesheets/:id', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 
-    
+
 });
 
 

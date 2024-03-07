@@ -19,7 +19,7 @@
 <body>
 
     <script>
-        
+
 
 
 
@@ -270,6 +270,40 @@
         </div>
     </div>
 
+
+
+
+
+
+
+   <!-- Add a modal to display the uploaded image 
+<div id="imageModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+       <div class="modal-content">
+         <div class="modal-header">
+           <h5 class="modal-title">Uploaded Image</h5>
+           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+             <span aria-hidden="true">&times;</span>
+           </button>
+         </div>
+         <div class="modal-body" id="imageContent">
+            Image will be inserted here 
+         </div>
+         <div class="modal-footer">
+           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+         </div>
+       </div>
+    </div>
+   </div>
+-->
+
+   
+
+
+
+
+
+
     <!-- Home Page Content -->
     <div id="content">
 
@@ -287,12 +321,12 @@
                     <button class="btn btn-primary" onclick="showTimeSheetModal()">Add Time</button>
                     <form class="upload form-inline" action="/upload" method="POST" enctype="multipart/form-data">
                         <div class="form-group mr-2">
-                            <input type="file" class="form-control-file custom-file-input" name="file" accept=".xlsx">
-                            
+                            <input type="file" class="form-control-file" name="file" accept=".xlsx,image/*">
                         </div>
                         <button type="submit" class="btn btn-primary custom-upload-button">Upload</button>
-                        
                     </form>
+
+
 
                 </div>
 
