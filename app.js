@@ -1,20 +1,13 @@
-const path = require('path');
+
+   const path = require('path')
 const cors = require('cors')
 const express = require('express');
 const bodyParser = require('body-parser');
 const Timesheet = require('./models/timesheet');
 const { Sequelize } = require('sequelize');
-
-//import libraries for uploading file
 const multer = require('multer');
-//const mysql = require('mysql');
 const xlsx = require('xlsx');
-
-
-
-
-
-
+const fs = require('fs');
 
 
 const app = express();
@@ -32,27 +25,31 @@ app.use(bodyParser.json());
 
 
 
-// Configure Multer for file upload
-// Configure Multer to dynamically set the destination based on the file type
-const storage = multer.diskStorage({
+// Function to read and update the upload counter like image1 , image2 etc.
+function getNextImageName() {
+    const counterPath = path.join(__dirname, 'uploadCounter.json');
+    const counterData = JSON.parse(fs.readFileSync(counterPath, 'utf8'));
+    const nextImageName = `image${counterData.counter}.jpg`;
+    counterData.counter++;
+    fs.writeFileSync(counterPath, JSON.stringify(counterData), 'utf8');
+    return nextImageName;
+   }
+   
+   // Configure Multer for file upload
+   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Check if the file is an image
-        if (file.mimetype.startsWith('image/')) {
-            // Set the destination to 'uploads/images'
-            cb(null, 'uploads/images/');
-        } else {
-            // For other file types, set the destination to 'uploads'
-            cb(null, 'uploads/');
-        }
+       cb(null, 'uploads/');
     },
     filename: function (req, file, cb) {
-        // Use the original file name
-        cb(null, file.originalname);
+       if (file.mimetype.startsWith('image/')) {
+         const nextImageName = getNextImageName();
+         cb(null, nextImageName);
+       } else {
+         cb(null, file.originalname);
+       }
     }
-});
-
-const upload = multer({ storage: storage });
-
+   });
+   const upload = multer({ storage: storage });
 
 
 
@@ -79,31 +76,8 @@ Timesheet.sync();
 
 
 // Middleware to serve static files from 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
-
-
-// Set EJS as the view engine
-app.set('view engine', 'ejs');
-
-
-// Configure Multer for image uploads
-//const uploadImages = multer({ dest: 'uploads/images/' });
-
-// Serve uploaded images
-//app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
-
-/* Route to handle image uploads
-app.post('/upload-image', uploadImages.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No file uploaded');
-    }
-    // You can save the image path in the database here if needed
-    res.send('Image uploaded successfully');
-});
-
-*/
-
+app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 
@@ -113,9 +87,8 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded');
     }
-
     if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-        // Handle .xlsx file
+        // Parse Excel file
         const workbook = xlsx.readFile(req.file.path);
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
@@ -137,21 +110,27 @@ app.post('/upload', upload.single('file'), async (req, res) => {
             res.status(500).send('Error inserting data into database');
         }
     } else if (req.file.mimetype.startsWith('image/')) {
-        // Handle image file
-        // For example, save the image path in the database
-        res.redirect(`/view-image?imagePath=/uploads/images/${req.file.filename}`);
+        
+        res.send({ filePath: '/uploads/' + req.file.filename }); // Adjust the path as necessary
     } else {
         return res.status(400).send('Invalid file type');
     }
 });
 
 
-
-app.get('/view-image', (req, res) => {
-    const imagePath = req.query.imagePath;
-    res.render('view-image', { imagePath });
+// Route to fetch  list of images 
+app.get('/api/list-uploads', (req, res) => {
+    const uploadsDir = path.join(__dirname, 'uploads');
+    fs.readdir(uploadsDir, (err, files) => {
+        if (err) {
+            console.error('Error reading uploads directory:', err);
+            return res.status(500).send('Error reading uploads directory');
+        }
+        // Filter out any non-image files if necessary
+        const imagesList = files.filter(file => file.endsWith('.jpg') || file.endsWith('.png') || file.endsWith('.jpeg'));
+        res.json(imagesList.map(file => ({ timesheet: file, action: 'View' })));
+    });
 });
-
 
 
 
@@ -177,14 +156,16 @@ app.post('/api/create-timesheets', async (req, res) => {
     }
 });
 
-
-
-
-
 // Fetch all timesheet entries
 app.get('/api/get-timesheets', async (req, res) => {
     try {
-        const timesheets = await Timesheet.findAll();
+        // const timesheets = await Timesheet.findAll();
+        const timesheets = await Timesheet.findAll({
+            logging:console.log,
+           
+            order: [['id','DESC']]
+              
+        })  
         res.json(timesheets);
     } catch (error) {
         console.error('Error fetching time sheet entries:', error);
@@ -216,6 +197,8 @@ app.put('/api/update-timesheet/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { fullName, workMode, officeLocation, hoursOfWork } = req.body;
+             
+              
         await Timesheet.update({
             fullName,
             workMode,
@@ -250,8 +233,8 @@ app.delete('/api/delete-timesheets/:id', async (req, res) => {
 
 
 
+
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
 

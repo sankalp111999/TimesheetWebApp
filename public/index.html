@@ -18,6 +18,8 @@
 
 <body>
 
+
+
     <script>
 
 
@@ -25,11 +27,85 @@
 
 
 
-        // Check if there's a query parameter indicating a successful upload
-        //if (window.location.search.includes('uploadSuccess')) {
-        // Refresh the page
-        //window.location.reload();
-        //}
+
+        // view images
+
+        function populateImagesList() {
+            // Fetch the images list from the server
+            $.ajax({
+                type: 'GET',
+                url: '/api/list-uploads',
+                success: function (imagesList) {
+                    $('#imagesListContainer').empty();
+
+                    imagesList.forEach(image => {
+                        $('#imagesListContainer').append(`
+ <tr class="image-item">
+ <td> <img src="/uploads/${image.timesheet}" alt="${image.timesheet}" style="width: 100px; height: auto;"> </td>
+ <td><button class="btn btn-primary view-image-btn" data-image-src="/uploads/${image.timesheet}">${image.action}</button></td>
+ </tr>
+ `);
+                    });
+
+                    // Attach click event listener to the "View" buttons
+                    $('.view-image-btn').on('click', function () {
+                        const imageSrc = $(this).data('image-src');
+                        $('#modalImage').attr('src', imageSrc); // Set the modal image source
+                        $('#imageModal').modal('show'); // Show the modal
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching images list:', error);
+                }
+            });
+        }
+
+
+
+
+
+
+
+
+
+
+        $(document).ready(function () {
+            $('#uploadButton').on('click', function (e) {
+                e.preventDefault();
+                var fd = new FormData();
+                var files = $('#image-input')[0].files[0];
+                fd.append('file', files); // Ensure the name matches the 'name' attribute of the file input
+
+
+                $.ajax({
+                    url: '/upload', // Corrected endpoint
+                    type: 'POST',
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        // Assuming the server responds with the file path
+                        // Construct the full URL to the uploaded image
+                        var imageUrl = window.location.protocol + "//" + window.location.host + response.filePath;
+                        $('#uploaded-image').html('<img src="' + imageUrl + '" alt="Uploaded Image">');
+                    },
+                    error: function () {
+                        alert('Error uploading image');
+                    }
+                });
+            });
+
+
+
+
+
+        });
+
+
+
+
+
+
 
 
 
@@ -112,58 +188,49 @@
             }
         }
 
+        fetchTimeSheetData();
+
+        function fetchTimeSheetData() {
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:3000/api/get-timesheets', // Endpoint to fetch time sheet data
+                success: function (timesheets) {
+                    // Clear existing table body content
+                    $('#timeSheetBody').empty();
 
 
-        $(document).ready(function () {
-            fetchTimeSheetData();
+                    timesheets.forEach(function (timesheet) {
+                        $('#timeSheetBody').append(`
+ <tr>
+ <td>${timesheet.fullName}</td>
+ <td>Sa-54328</td>
+ <td>${timesheet.workMode}</td>
+ <td>${timesheet.officeLocation}</td>
+ <td>${timesheet.hoursOfWork}</td>
+ <td class="button-group">
+ <button id="edit" class="btn btn-primary" onclick="editTimeSheet(${timesheet.id})">Edit</button>
+ <button id="delete" class="btn btn-danger" onclick="deleteTimeSheet(${timesheet.id})">Delete</button>
 
-
-
-            function fetchTimeSheetData() {
-                $.ajax({
-                    type: 'GET',
-                    url: 'http://localhost:3000/api/get-timesheets', // Endpoint to fetch time sheet data
-                    success: function (timesheets) {
-                        // Clear existing table body content
-                        $('#timeSheetBody').empty();
-
-
-                        timesheets.forEach(function (timesheet) {
-                            $('#timeSheetBody').append(`
-                                <tr>
-                                    <td>${timesheet.fullName}</td>
-                                    <td>Sa-54328</td>
-                                    <td>${timesheet.workMode}</td>
-                                    <td>${timesheet.officeLocation}</td>
-                                    <td>${timesheet.hoursOfWork}</td>
-                                    <td class="button-group">
-                                        <button id="edit" class="btn btn-primary" onclick="editTimeSheet(${timesheet.id})">Edit</button>
-                                        <button id="delete" class="btn btn-danger" onclick="deleteTimeSheet(${timesheet.id})">Delete</button>
-
-                                    </td>
-                                </tr>
-                            `);
-                        });
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error fetching time sheet data:', error);
-
-                    }
-                });
-            }
-
-
-            var app = Sammy('#content', function () {
-
-                this.get('#/', function () {
-                    this.partial('templates/home.template');
-                });
+ </td>
+ </tr>
+ `);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching time sheet data:', error);
+                }
             });
+        }
+
+        // var app = Sammy('#content', function () {
+
+        // this.get('#/', function () {
+        // this.partial('templates/home.template');
+        // });
+        // });
 
 
-            app.run('#/');
-        });
-
+        // app.run('#/');
 
 
         // Show the time sheet entry modal
@@ -227,6 +294,9 @@
         }
 
 
+
+
+
     </script>
 
     <!-- Time Sheet Entry Modal -->
@@ -270,40 +340,7 @@
         </div>
     </div>
 
-
-
-
-
-
-
-   <!-- Add a modal to display the uploaded image 
-<div id="imageModal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-       <div class="modal-content">
-         <div class="modal-header">
-           <h5 class="modal-title">Uploaded Image</h5>
-           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
-           </button>
-         </div>
-         <div class="modal-body" id="imageContent">
-            Image will be inserted here 
-         </div>
-         <div class="modal-footer">
-           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-         </div>
-       </div>
-    </div>
-   </div>
--->
-
-   
-
-
-
-
-
-
+    
     <!-- Home Page Content -->
     <div id="content">
 
@@ -313,6 +350,32 @@
         </div>
 
 
+        <a id="viewImagesButton" onclick="populateImagesList()" class="btn btn-primary">View Images</a>
+
+
+
+
+
+        <!-- Image Modal -->
+        <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document" style="width: max-content;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <img id="modalImage" src="" alt="Image Preview" style="width: 100%;">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Centered Card -->
         <div id="centeredCard" class="card">
@@ -321,14 +384,38 @@
                     <button class="btn btn-primary" onclick="showTimeSheetModal()">Add Time</button>
                     <form class="upload form-inline" action="/upload" method="POST" enctype="multipart/form-data">
                         <div class="form-group mr-2">
-                            <input type="file" class="form-control-file" name="file" accept=".xlsx,image/*">
+                            <input type="file" class="form-control-file" id="image-input" name="file"
+                                accept=".xlsx,image/*">
                         </div>
                         <button type="submit" class="btn btn-primary custom-upload-button">Upload</button>
+
+
                     </form>
 
 
-
                 </div>
+
+
+
+
+
+                <div class="file-list">
+                    <h2>File List</h2>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="imagesListContainer">
+                        </tbody>
+                    </table>
+                </div>
+
+
+
+
 
                 <div class="UserTable">
                     <table border={1} cellPadding={10} cellSpacing={3}>
@@ -346,6 +433,7 @@
 
                         </tbody>
                     </table>
+                    <div id="uploaded-image"></div>
                 </div>
             </div>
         </div>

@@ -109,7 +109,7 @@ body {
 .btn {
     display: block;
     margin: auto;
-    margin-right: 60%;
+    
 }
 
 .btn1 {
@@ -141,4 +141,11 @@ body {
 
     background: rgb(51, 61, 206);
     background: linear-gradient(0deg, rgb(32, 42, 189) 0%, rgb(0, 12, 143) 100%);
+}
+
+
+
+
+#viewImagesButton{
+    color: #fff;
 }
